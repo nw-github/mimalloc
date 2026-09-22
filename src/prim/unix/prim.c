@@ -257,7 +257,11 @@ void _mi_prim_mem_init( mi_os_mem_config_t* config )
   }
   config->large_page_size = MI_UNIX_LARGE_PAGE_SIZE;
   config->has_overcommit = unix_detect_overcommit();
+  #ifdef __luxe__
+  config->has_partial_free = false;
+  #else
   config->has_partial_free = true;    // mmap can free in parts
+  #endif
   config->has_virtual_reserve = true; // todo: check if this true for NetBSD?  (for anonymous mmap with PROT_NONE)
   config->has_transparent_huge_pages = unix_detect_thp();
   config->virtual_address_bits = unix_detect_virtual_address_bits();
@@ -1000,6 +1004,11 @@ bool _mi_prim_random_buf(void* buf, size_t buf_len) {
 #else
 
 bool _mi_prim_random_buf(void* buf, size_t buf_len) {
+#if defined(__luxe__)
+  extern int getrandom(void *, size_t, unsigned int);
+  return getrandom(buf, buf_len, 0) >= 0;
+#endif
+
   return false;
 }
 
